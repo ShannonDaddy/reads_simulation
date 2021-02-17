@@ -1,7 +1,6 @@
 #!/usr/bin/python
 import argparse
 import textwrap
-import pandas
 import pandas as pd
 import gzip
 import os
@@ -261,7 +260,7 @@ def get_read_length(art_opts):
 def simulate_reads(df_amp, df_var):
 
     read_len = get_read_length(art_opts)
-    ampIndex_list = sorted(list(set(df_var.index)))
+    ampIndex_list = sorted(list(set(df_amp.index)))
     out_dir = os.path.dirname(os.path.realpath(read1_out))
     if not os.path.exists(out_dir):
         os.mkdir(out_dir)
@@ -270,12 +269,12 @@ def simulate_reads(df_amp, df_var):
         os.mkdir(tmp_dir)
     for ind, ampIndex in enumerate(ampIndex_list):
         mtag_recorded = {}
-        vars = df_var.loc[ampIndex, :]
-        var_seq_num = 0
+        vars = pd.DataFrame()
+        if ampIndex in df_var.index:
+            vars = df_var.loc[ampIndex, :]
 
-        var_num = 1
-        if isinstance(vars, pandas.DataFrame):
-            var_num = len(vars)
+        var_seq_num = 0
+        var_num = len(vars)
 
         for i in range(0, var_num):
             var = vars
