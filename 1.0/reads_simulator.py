@@ -65,7 +65,7 @@ def parse_arguments():
         art_opts = argsDict['art_opts']
 
     if argsDict['molecule_num']:
-        molecule_num = argsDict['molecule_num']
+        molecule_num = int(argsDict['molecule_num'])
 
     # if argsDict['molecule_pcr_fold']:
     #     molecule_pcr_fold = argsDict['molecule_pcr_fold']
@@ -191,7 +191,7 @@ def get_amp_seq(df_amp, ampIndex, molecule_num, mtag_recorded, out_prefix, read_
             # seq2 = mtag1_filled + prbSeq + mtag2_filled_rc + SEQ2_BEYOND
             seq2 = SEQ2_BEYOND_RC + mtag2_filled + prbSeq_rc + mtag1_filled_rc
         else:
-            name = '_'.join([ampID])
+            name = '_'.join([ampID, str(i+1)])
             seq1 = prbSeq_rc + SEQ1_BEYOND
             seq2 = SEQ2_BEYOND_RC + prbSeq_rc
         seq1 += 'A' * (read_len - len(seq1))
@@ -267,6 +267,8 @@ def simulate_reads(df_amp, df_var):
     tmp_dir = out_dir + "/sim_tmp"
     if not os.path.exists(tmp_dir):
         os.mkdir(tmp_dir)
+
+    mode = "a"
     for ind, ampIndex in enumerate(ampIndex_list):
         mtag_recorded = {}
         vars = pd.DataFrame()
@@ -274,18 +276,19 @@ def simulate_reads(df_amp, df_var):
             vars = df_var.loc[ampIndex, :]
 
         var_seq_num = 0
-        var_num = len(vars)
+        var_num = 1
+        if isinstance(vars, pd.DataFrame):
+            var_num = len(vars)
 
         for i in range(0, var_num):
             var = vars
             if var_num > 1:
-                var = vars.ix[i]
+                var = vars.iloc[i]
             seq_num = int(molecule_num * float(var["vaf"]))
             var_seq_num += seq_num
             out_prefix = "%s/amp%d_var%d" % (tmp_dir, ampIndex, i)
             var_amp_seq1, var_amp_seq2 = get_amp_seq(df_amp, ampIndex, seq_num, mtag_recorded, out_prefix, read_len, var)
             sim_reads1, sim_reads2 = get_sim_reads(var_amp_seq1, var_amp_seq2, out_prefix)
-            mode = "a"
             if (ind == 0) and (i == 0):
                 mode = "w"
             write_sim_reads(sim_reads1, read1_out, mode)
@@ -295,7 +298,8 @@ def simulate_reads(df_amp, df_var):
         out_prefix = "%s/amp%d_wt" % (tmp_dir, ampIndex)
         raw_amp_seq1, raw_amp_seq2 = get_amp_seq(df_amp, ampIndex, raw_seq_num, mtag_recorded, out_prefix, read_len)
         sim_reads1, sim_reads2 = get_sim_reads(raw_amp_seq1, raw_amp_seq2, out_prefix)
-        mode = "a"
+        if (ind == 0) and (var_num == 0):
+            mode = "w"
         write_sim_reads(sim_reads1, read1_out, mode)
         write_sim_reads(sim_reads2, read2_out, mode)
 
