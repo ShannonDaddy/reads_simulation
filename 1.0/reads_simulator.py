@@ -235,14 +235,12 @@ def open_file(input_file, mode):
     return fin
 
 
-def write_sim_reads(sim_reads, read_out, mode):
-    fout = open_file(read_out, mode)
+def write_sim_reads(sim_reads, fw):
     fin = open_file(sim_reads, 'r')
 
     for line in fin:
-        fout.write(line)
+        fw.write(line)
 
-    fout.close()
     fin.close()
 
 
@@ -268,7 +266,8 @@ def simulate_reads(df_amp, df_var):
     if not os.path.exists(tmp_dir):
         os.mkdir(tmp_dir)
 
-    mode = "a"
+    fout1 = open_file(read1_out, 'w')
+    fout2 = open_file(read2_out, 'w')
     for ind, ampIndex in enumerate(ampIndex_list):
         mtag_recorded = {}
         vars = pd.DataFrame()
@@ -289,19 +288,17 @@ def simulate_reads(df_amp, df_var):
             out_prefix = "%s/amp%d_var%d" % (tmp_dir, ampIndex, i)
             var_amp_seq1, var_amp_seq2 = get_amp_seq(df_amp, ampIndex, seq_num, mtag_recorded, out_prefix, read_len, var)
             sim_reads1, sim_reads2 = get_sim_reads(var_amp_seq1, var_amp_seq2, out_prefix)
-            if (ind == 0) and (i == 0):
-                mode = "w"
-            write_sim_reads(sim_reads1, read1_out, mode)
-            write_sim_reads(sim_reads2, read2_out, mode)
+            write_sim_reads(sim_reads1, fout1)
+            write_sim_reads(sim_reads2, fout2)
 
         raw_seq_num = molecule_num - var_seq_num
         out_prefix = "%s/amp%d_wt" % (tmp_dir, ampIndex)
         raw_amp_seq1, raw_amp_seq2 = get_amp_seq(df_amp, ampIndex, raw_seq_num, mtag_recorded, out_prefix, read_len)
         sim_reads1, sim_reads2 = get_sim_reads(raw_amp_seq1, raw_amp_seq2, out_prefix)
-        if (ind == 0) and (var_num == 0):
-            mode = "w"
-        write_sim_reads(sim_reads1, read1_out, mode)
-        write_sim_reads(sim_reads2, read2_out, mode)
+        write_sim_reads(sim_reads1, fout1)
+        write_sim_reads(sim_reads2, fout2)
+    fout2.close()
+    fout1.close()
 
 
 def main():
